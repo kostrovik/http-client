@@ -1,0 +1,60 @@
+plugins {
+    id 'java'
+    id 'idea'
+}
+
+group 'com.github.kostrovik'
+version '1.0-SNAPSHOT'
+def moduleName = 'http-client'
+
+sourceCompatibility = 10
+targetCompatibility = 10
+compileJava.options.encoding = "UTF-8"
+compileTestJava.options.encoding = "UTF-8"
+
+repositories {
+    maven { url "http://modules/repositories/java9-modular-libs" }
+    jcenter()
+    mavenCentral()
+}
+
+dependencies {
+    testCompile("org.junit.jupiter:junit-jupiter-api:5.2.0")
+    testRuntime("org.junit.jupiter:junit-jupiter-engine:5.2.0")
+
+    compile('jackson:core:2.9.6')
+    compile('jackson:databind:2.9.6')
+}
+
+test {
+    useJUnitPlatform()
+}
+
+idea {
+    module {
+        inheritOutputDirs = true
+    }
+}
+
+jar {
+    inputs.property("moduleName", moduleName)
+    manifest {
+        attributes(
+                'Automatic-Module-Name': moduleName,
+        )
+    }
+}
+
+compileJava {
+    inputs.property("moduleName", moduleName)
+    doFirst {
+        options.compilerArgs = [
+                '--module-path', classpath.asPath,
+        ]
+        classpath = files()
+    }
+}
+
+task sourceJar(type: Jar) {
+    from sourceSets.main.allJava
+}
