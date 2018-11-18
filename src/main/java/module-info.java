@@ -10,4 +10,5 @@ module com.github.kostrovik.http.client {
     requires com.fasterxml.jackson.databind;
 
     exports com.github.kostrovik.http.client.common;
+    exports com.github.kostrovik.http.client.interfaces;
 }

@@ -6,6 +6,7 @@ import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -20,6 +21,9 @@ public class ConnectionUtils {
     private Pattern serverAddressPattern = Pattern.compile("^(https?)://[-a-zA-Z0-9+&@#/%?=_!:,.;]*[-a-zA-Z0-9+&@#/%=_]");
 
     public HttpProtocol parseProtocol(String serverAddress) {
+        if (Objects.isNull(serverAddress)) {
+            return HttpProtocol.HTTP;
+        }
         Matcher matcher = serverAddressPattern.matcher(serverAddress);
         if (matcher.matches() && matcher.group(1).trim().isEmpty()) {
             return HttpProtocol.HTTP;
@@ -33,6 +37,9 @@ public class ConnectionUtils {
     }
 
     public String prepareQueryParams(Map<String, List<String>> urlParams, Charset charset) {
+        if (Objects.isNull(urlParams)) {
+            return "";
+        }
         return urlParams.keySet().stream().map(key -> {
             if (urlParams.get(key).size() == 1) {
                 return String.format("%s=%s", key, encodeValue(urlParams.get(key).get(0), charset));
@@ -42,7 +49,8 @@ public class ConnectionUtils {
         }).collect(Collectors.joining("&"));
     }
 
-    public String encodeValue(String value, Charset charset) {
+    private String encodeValue(String value, Charset charset) {
+        Objects.requireNonNull(value);
         return URLEncoder.encode(value, charset);
     }
 }

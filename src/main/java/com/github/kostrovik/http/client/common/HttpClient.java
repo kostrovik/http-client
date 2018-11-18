@@ -5,6 +5,8 @@ import com.github.kostrovik.http.client.dictionaries.HttpProtocol;
 import com.github.kostrovik.http.client.utils.ConnectionUtils;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -12,7 +14,11 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -29,6 +35,7 @@ public class HttpClient {
     private boolean useHttps;
     private ConnectionUtils connectionUtils;
     private ObjectMapper mapper;
+    private String answerDetailsAttribute;
 
     public HttpClient(String serverAddress) {
         this(serverAddress, Charset.forName("UTF-8"));
@@ -40,7 +47,8 @@ public class HttpClient {
 
         connectionUtils = new ConnectionUtils();
         this.useHttps = connectionUtils.parseProtocol(this.serverAddress).equals(HttpProtocol.HTTPS);
-        mapper = new ObjectMapper();
+        this.mapper = new ObjectMapper();
+        this.answerDetailsAttribute = "";
     }
 
     public boolean isUseHttps() {
@@ -60,11 +68,22 @@ public class HttpClient {
         return serverAddress;
     }
 
+    public String getAnswerDetailsAttribute() {
+        return answerDetailsAttribute;
+    }
+
+    public void setAnswerDetailsAttribute(String answerDetailsAttribute) {
+        Objects.requireNonNull(answerDetailsAttribute);
+        this.answerDetailsAttribute = answerDetailsAttribute;
+    }
+
     public HttpClientAnswer sendRequest(String method, String apiUrl, Map<String, String> headers, String data, Map<String, List<String>> urlParams) throws IOException {
         StringBuilder response = new StringBuilder();
         String requestParams = connectionUtils.prepareQueryParams(urlParams, charset);
 
-        URL serverApiUrl = new URL(serverAddress + apiUrl + "?" + requestParams);
+        URL serverApiUrl = requestParams.isEmpty()
+                ? new URL(serverAddress + apiUrl)
+                : new URL(serverAddress + apiUrl + "?" + requestParams);
 
         URLConnection connection = createConnection(method, headers, serverApiUrl);
 
@@ -77,6 +96,15 @@ public class HttpClient {
         }
 
         return parseResponse(response, (HttpURLConnection) connection);
+    }
+
+    public File downloadFile(URL fromUrl, Path filePath) throws IOException {
+        try (ReadableByteChannel readChannel = Channels.newChannel(fromUrl.openStream())) {
+            try (FileChannel writeChannel = new FileOutputStream(filePath.toString()).getChannel()) {
+                writeChannel.transferFrom(readChannel, 0, Long.MAX_VALUE);
+                return new File(filePath.toUri());
+            }
+        }
     }
 
     private HttpClientAnswer parseResponse(StringBuilder answer, HttpURLConnection connection) throws IOException {
@@ -106,7 +134,7 @@ public class HttpClient {
                 try (InputStream inputStream = connection.getInputStream()) {
                     HttpClientAnswer ans = buildAnswer(connection.getResponseCode(), connection.getResponseMessage(), null);
                     ans.setHeaders(connection.getHeaderFields());
-                    ans.setFile((ByteArrayInputStream) inputStream);
+                    ans.setFile(new ByteArrayInputStream(inputStream.readAllBytes()));
                     return ans;
                 }
             }
@@ -118,8 +146,10 @@ public class HttpClient {
         if (Objects.nonNull(answer) && !answer.trim().isEmpty()) {
             try {
                 Map data = mapper.readValue(answer, Map.class);
-                details = data.getOrDefault("details", new Object());
+                details = answerDetailsAttribute.isEmpty() ? data : data.getOrDefault("details", new Object());
+                details = Objects.isNull(details) ? new Object() : details;
             } catch (IOException error) {
+                details = new Object();
             }
         }
 
