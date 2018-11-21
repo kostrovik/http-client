@@ -1,7 +1,7 @@
 package com.github.kostrovik.http.client.utils;
 
 import com.github.kostrovik.http.client.common.HttpClient;
-import com.github.kostrovik.http.client.interfaces.Listener;
+import com.github.kostrovik.useful.interfaces.Listener;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,6 +20,7 @@ public class Downloader implements Runnable {
     private URL from;
     private Path to;
     private Listener<File> listener;
+    private Listener<Double> progressListener;
 
     public Downloader(HttpClient client, URL from, Path to) {
         Objects.requireNonNull(client);
@@ -38,10 +39,21 @@ public class Downloader implements Runnable {
         }
     }
 
+    public void setProgressListener(Listener<Double> listener) {
+        if (Objects.nonNull(listener)) {
+            this.progressListener = listener;
+        }
+    }
+
     @Override
     public void run() {
         try {
-            File result = client.downloadFile(from, to);
+            File result;
+            if (Objects.nonNull(progressListener)) {
+                result = client.downloadFile(from, to, progressListener);
+            } else {
+                result = client.downloadFile(from, to);
+            }
             if (Objects.nonNull(listener)) {
                 listener.handle(result);
             }

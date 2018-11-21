@@ -24,6 +24,12 @@ dependencies {
 
     compile('jackson:core:2.9.6')
     compile('jackson:databind:2.9.6')
+    compile 'com.github.kostrovik:useful-utils:1.0-SNAPSHOT'
+}
+
+configurations.all {
+    // Check for updates every build
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
 }
 
 test {

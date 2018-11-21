@@ -8,7 +8,7 @@ module com.github.kostrovik.http.client {
     requires java.logging;
     requires com.fasterxml.jackson.core;
     requires com.fasterxml.jackson.databind;
+    requires com.github.kostrovik.useful.utils;
 
     exports com.github.kostrovik.http.client.common;
-    exports com.github.kostrovik.http.client.interfaces;
 }

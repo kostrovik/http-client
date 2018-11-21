@@ -1,7 +1,7 @@
 package com.github.kostrovik.http.client.common;
 
-import com.github.kostrovik.http.client.interfaces.Listener;
 import com.github.kostrovik.http.client.utils.Downloader;
+import com.github.kostrovik.useful.interfaces.Listener;
 
 import java.io.File;
 import java.io.IOException;
@@ -59,6 +59,13 @@ public class HttpRequest {
         new Thread(loader).start();
     }
 
+    public void downloadWithProgressListener(URL from, Path filePath, Listener<File> listener, Listener<Double> progressListener) {
+        Downloader loader = new Downloader(client, from, filePath);
+        loader.setListener(listener);
+        loader.setProgressListener(progressListener);
+        new Thread(loader).start();
+    }
+
     public void setQueryParams(Map<String, List<String>> queryParams) {
         this.queryParams = queryParams;
     }
@@ -72,7 +79,9 @@ public class HttpRequest {
     }
 
     public void build() throws IOException {
-        this.result = client.sendRequest(method, apiUrl, headers, data, queryParams);
+        client.createConnection(method, headers, apiUrl, queryParams);
+        client.setConnectionData(data);
+        this.result = client.getResponse();
     }
 
     public HttpClientAnswer getResult() {
