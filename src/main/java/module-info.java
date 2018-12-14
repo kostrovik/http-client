@@ -11,4 +11,5 @@ module com.github.kostrovik.http.client {
     requires com.github.kostrovik.useful.utils;
 
     exports com.github.kostrovik.http.client.common;
+    exports com.github.kostrovik.http.client.exceptions;
 }

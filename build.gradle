@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'com.github.kostrovik'
-version '1.0-SNAPSHOT'
+version '1.1.0-SNAPSHOT'
 def moduleName = 'http-client'
 
 sourceCompatibility = 10
@@ -13,7 +13,7 @@ compileJava.options.encoding = "UTF-8"
 compileTestJava.options.encoding = "UTF-8"
 
 repositories {
-    maven { url "http://modules/repositories/java9-modular-libs" }
+    maven { url 'https://jitpack.io' }
     jcenter()
     mavenCentral()
 }
@@ -22,18 +22,34 @@ dependencies {
     testCompile("org.junit.jupiter:junit-jupiter-api:5.2.0")
     testRuntime("org.junit.jupiter:junit-jupiter-engine:5.2.0")
 
-    compile('jackson:core:2.9.6')
-    compile('jackson:databind:2.9.6')
-    compile 'com.github.kostrovik:useful-utils:1.0-SNAPSHOT'
+    compile files('libs/jackson-annotations-2.9.0.jar')
+    compile files('libs/jackson-core-2.9.6.jar')
+    compile files('libs/jackson-databind-2.9.6.jar')
+    implementation 'com.github.kostrovik:useful-utils:1.1.0'
 }
 
 configurations.all {
-    // Check for updates every build
     resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
 }
 
 test {
-    useJUnitPlatform()
+    useJUnitPlatform {
+        includeEngines 'junit-jupiter'
+    }
+
+    testLogging {
+        events 'PASSED', 'FAILED', 'SKIPPED'
+    }
+
+    afterSuite { desc, result ->
+        if (!desc.parent) {
+            println "\nTest result: ${result.resultType}"
+            println "Test summary: ${result.testCount} tests, " +
+                    "${result.successfulTestCount} succeeded, " +
+                    "${result.failedTestCount} failed, " +
+                    "${result.skippedTestCount} skipped"
+        }
+    }
 }
 
 idea {

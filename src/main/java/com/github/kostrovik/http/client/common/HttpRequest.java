@@ -25,7 +25,6 @@ public class HttpRequest {
     private String data;
     private Map<String, String> headers;
     private String method;
-    private HttpClientAnswer result;
 
     public HttpRequest(HttpClient client) {
         this.client = client;
@@ -36,27 +35,26 @@ public class HttpRequest {
         this.method = "GET";
     }
 
-    public void GET(String apiUrl) {
+    public HttpRequest GET(String apiUrl) {
         Objects.requireNonNull(apiUrl);
         this.method = "GET";
         this.apiUrl = apiUrl;
+        return this;
     }
 
-    public void POST(String apiUrl) {
+    public HttpRequest POST(String apiUrl) {
         Objects.requireNonNull(apiUrl);
         this.method = "POST";
         this.apiUrl = apiUrl;
+        return this;
     }
 
     public void download(URL from, Path filePath) {
-        Downloader loader = new Downloader(client, from, filePath);
-        new Thread(loader).start();
+        downloadWithProgressListener(from, filePath, null, null);
     }
 
     public void download(URL from, Path filePath, Listener<File> listener) {
-        Downloader loader = new Downloader(client, from, filePath);
-        loader.setListener(listener);
-        new Thread(loader).start();
+        downloadWithProgressListener(from, filePath, listener, null);
     }
 
     public void downloadWithProgressListener(URL from, Path filePath, Listener<File> listener, Listener<Double> progressListener) {
@@ -66,25 +64,28 @@ public class HttpRequest {
         new Thread(loader).start();
     }
 
-    public void setQueryParams(Map<String, List<String>> queryParams) {
+    public HttpRequest setQueryParams(Map<String, List<String>> queryParams) {
         this.queryParams = queryParams;
+        return this;
     }
 
-    public void setData(String data) {
+    public HttpRequest setData(String data) {
         this.data = data;
+        return this;
     }
 
-    public void setHeaders(Map<String, String> headers) {
+    public HttpRequest setHeaders(Map<String, String> headers) {
         this.headers = headers;
+        return this;
     }
 
-    public void build() throws IOException {
+    public HttpRequest build() throws IOException {
         client.createConnection(method, headers, apiUrl, queryParams);
         client.setConnectionData(data);
-        this.result = client.getResponse();
+        return this;
     }
 
-    public HttpClientAnswer getResult() {
-        return result;
+    public HttpResponse getResponse() {
+        return client.getResponse();
     }
 }
